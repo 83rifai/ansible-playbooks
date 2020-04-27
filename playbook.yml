@@ -72,17 +72,13 @@
       service:
         name: apache2
         state: restarted
-        
+
 - hosts: profile_web
   become: true
   vars_files:
     - vars/default.yml
 
   tasks:
-    - name: Install prerequisites
-      apt: name=aptitude update_cache=yes state=latest force_apt_get=yes
-      tags: [ system ]
-
   # WordPress Configuration
     - name: Download and unpack latest WordPress
       unarchive:
@@ -125,15 +121,50 @@
       service:
         name: apache2
         state: restarted
-        
+
 # prestashop
 - hosts: ec_web
   become: true
   vars_files:
     - vars/default.yml
-  roles:
-    - common
-    - prestashop
+  tasks:
+  # PrestaShop Configuration
+    - name: Download and unpack latest PrestaShop
+      unarchive:
+        src: https://download.prestashop.com/download/releases/prestashop_1.7.4.2.zip
+        dest: "/var/www/{{ http_host }}"
+        remote_src: yes
+        creates: "/var/www/{{ http_host }}/prestashop"
+      tags: [ wordpress ]
+
+    - name: Set ownership
+      file:
+        path: "/var/www/{{ http_host }}"
+        state: directory
+        recurse: yes
+        owner: www-data
+        group: www-data
+      tags: [ wordpress ]
+
+    - name: Set permissions for directories
+      shell: "/usr/bin/find /var/www/{{ http_host }}/prestashop/ -type d -exec chmod 750 {} \\;"
+      tags: [ wordpress ]
+
+    - name: Set permissions for files
+      shell: "/usr/bin/find /var/www/{{ http_host }}/prestashop/ -type f -exec chmod 640 {} \\;"
+      tags: [ wordpress ]
+
+  handlers:
+    - name: Reload Apache
+      service:
+        name: apache2
+        state: reloaded
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
+
 
   handlers:
     - name: Reload Apache
