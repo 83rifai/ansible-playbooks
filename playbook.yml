@@ -130,7 +130,7 @@
   tasks:
   # PrestaShop Configuration
     - name: Download and unpack latest PrestaShop
-      unarchive:
+      win_unzip:
         src: https://download.prestashop.com/download/releases/prestashop_1.7.4.2.zip
         dest: "/var/www/{{ http_host }}"
         remote_src: yes
